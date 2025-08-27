@@ -1,5 +1,5 @@
 {
-  "name": "web-crawler-extension",
+  "name": "markdown-converter",
   "version": "1.0.0",
   "description": "Browser extension for converting web pages to markdown",
   "main": "content/content.js",
@@ -27,7 +27,7 @@
     "markdown-converter",
     "chrome-extension"
   ],
-  "author": "Your Name",
+  "author": "Lambdalf the White <lambdalf.dev@gmail.com>",
   "license": "MIT",
   "packageManager": "yarn@1.22.22"
 }
