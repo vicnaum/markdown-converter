@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Crawler</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Web Crawler</h1>
+      <p class="subtitle">Convert current page to Markdown</p>
+      
+      <div class="status" id="status">
+        <p>Ready to convert</p>
+      </div>
+      
+      <button id="convertBtn" class="convert-btn">
+        Convert to Markdown
+      </button>
+      
+      <div class="progress" id="progress" style="display: none;">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p id="progressText">Processing...</p>
+      </div>
+      
+      <div class="result" id="result" style="display: none;">
+        <p id="resultText"></p>
+        <button id="downloadBtn" class="download-btn">Download Markdown</button>
+      </div>
+    </div>
+    
+    <script src="popup.js"></script>
+  </body>
+</html>
