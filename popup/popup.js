@@ -1,3 +1,7 @@
+// Module-level state for storing conversion results
+let lastMarkdown = null;
+let lastFilename = null;
+
 document.addEventListener('DOMContentLoaded', function() {
   const convertBtn = document.getElementById('convertBtn');
   const status = document.getElementById('status');
@@ -7,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const result = document.getElementById('result');
   const resultText = document.getElementById('resultText');
   const downloadBtn = document.getElementById('downloadBtn');
+  const copyBtn = document.getElementById('copyBtn');
 
   // Convert button click handler
   convertBtn.addEventListener('click', async function() {
@@ -35,18 +40,24 @@ document.addEventListener('DOMContentLoaded', function() {
         action: 'convertToMarkdown'
       });
 
-      if (response.success) {
-        // Show success result
-        resultText.textContent = `Successfully converted "${response.title}" to Markdown`;
-        result.style.display = 'block';
-        status.innerHTML = '<p>Conversion complete!</p>';
-        
-        // Store the markdown content for download
-        window.markdownContent = response.markdown;
-        window.filename = response.filename;
-      } else {
-        throw new Error(response.error || 'Conversion failed');
-      }
+             if (response.success) {
+         // Show success result
+         resultText.textContent = `Successfully converted "${response.title}" to Markdown`;
+         result.style.display = 'block';
+         status.innerHTML = '<p>Conversion complete!</p>';
+         
+         // Store the markdown content for download and copy
+         window.markdownContent = response.markdown;
+         window.filename = response.filename;
+         lastMarkdown = response.markdown;
+         lastFilename = response.filename;
+         
+         // Enable action buttons
+         downloadBtn.disabled = false;
+         copyBtn.disabled = false;
+       } else {
+         throw new Error(response.error || 'Conversion failed');
+       }
 
     } catch (error) {
       console.error('Conversion error:', error);
@@ -70,6 +81,20 @@ document.addEventListener('DOMContentLoaded', function() {
         filename: window.filename,
         saveAs: true
       });
+    }
+  });
+
+  // Copy button click handler
+  copyBtn.addEventListener('click', async function() {
+    if (!lastMarkdown) return;
+    try {
+      await navigator.clipboard.writeText(lastMarkdown);
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => (copyBtn.textContent = 'Copy to Clipboard'), 1200);
+    } catch (e) {
+      console.error('Clipboard copy failed:', e);
+      copyBtn.textContent = 'Copy failed';
+      setTimeout(() => (copyBtn.textContent = 'Copy to Clipboard'), 1500);
     }
   });
 });
