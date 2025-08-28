@@ -1,6 +1,6 @@
 # Privacy Policy for Web Crawler - Markdown Converter
 
-**Last updated:** [Current Date]
+**Last updated:** August 28, 2025
 
 ## Overview
 
@@ -48,7 +48,7 @@ We may update this privacy policy from time to time. We will notify users of any
 
 ## Contact Information
 
-If you have questions about this privacy policy, please contact us at [Your Email].
+If you have questions about this privacy policy, please contact us at lambdalf.dev@gmail.com.
 
 ## Compliance
 
