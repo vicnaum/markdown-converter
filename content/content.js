@@ -1,148 +1,8 @@
 // Content script for processing web pages
-// Utility functions for content processing
-function isElementVisible(element) {
-  if (!element) return false;
-  
-  const style = window.getComputedStyle(element);
-  if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
-    return false;
-  }
-  
-  if (element.hidden) return false;
-  
-  const rect = element.getBoundingClientRect();
-  if (rect.width === 0 || rect.height === 0) {
-    return false;
-  }
-  
-  const hiddenClasses = ['hidden', 'invisible', 'collapsed', 'collapsed-content'];
-  if (hiddenClasses.some(cls => element.classList.contains(cls))) {
-    return false;
-  }
-  
-  return true;
-}
-
-function hasRealContent(element, depth = 0) {
-  if (!element) return false;
-  if (depth > 10) return false; // Safety check for infinite recursion
-  
-  // Check if this element itself has meaningful content
-  const hasText = element.textContent.trim().length > 0;
-  const hasImages = element.querySelectorAll('img').length > 0;
-  const hasLinks = element.querySelectorAll('a').length > 0;
-  const hasLists = element.querySelectorAll('ul, ol').length > 0;
-  const hasTables = element.querySelectorAll('table').length > 0;
-  const hasHeadings = element.querySelectorAll('h1, h2, h3, h4, h5, h6').length > 0;
-  
-  if (hasText || hasImages || hasLinks || hasLists || hasTables || hasHeadings) {
-    return true;
-  }
-  
-  // Check children recursively
-  const children = element.children;
-  if (children.length === 0) {
-    return hasText;
-  }
-  
-  for (const child of children) {
-    if (hasRealContent(child, depth + 1)) {
-      return true;
-    }
-  }
-  
-  return false;
-}
-
-function shouldProcessElement(element) {
-  if (!element) return false;
-  if (!isElementVisible(element)) return false;
-  if (!hasRealContent(element)) return false;
-  
-  // Check for meaningful content types
-  const text = element.textContent.trim();
-  const hasText = text.length > 0;
-  const hasImages = element.querySelectorAll('img').length > 0;
-  const hasLinks = element.querySelectorAll('a').length > 0;
-  const hasLists = element.querySelectorAll('ul, ol').length > 0;
-  const hasTables = element.querySelectorAll('table').length > 0;
-  const hasHeadings = element.querySelectorAll('h1, h2, h3, h4, h5, h6').length > 0;
-  
-  return hasText || hasImages || hasLinks || hasLists || hasTables || hasHeadings;
-}
-
-function removeRepetitiveContent(markdown) {
-  if (!markdown) return '';
-  
-  const lines = markdown.split('\n');
-  const uniqueLines = [];
-  const seenLines = new Set();
-  let lastWasEmpty = false;
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    
-    // Handle empty lines - normalize consecutive empty lines to just one
-    if (!trimmedLine) {
-      if (!lastWasEmpty) {
-        uniqueLines.push(line);
-        lastWasEmpty = true;
-      }
-      continue;
-    }
-    
-    // Reset empty line flag for non-empty lines
-    lastWasEmpty = false;
-    
-    // For non-empty lines, check if we've seen this content before
-    if (!seenLines.has(trimmedLine)) {
-      uniqueLines.push(line);
-      seenLines.add(trimmedLine);
-    }
-  }
-  
-  return uniqueLines.join('\n');
-}
-
-function cleanupMarkdown(markdown) {
-  if (!markdown) return '';
-  
-  let cleaned = markdown
-    .replace(/[ \t]+/g, ' ')                 // Normalize spaces and tabs (but not newlines)
-    .replace(/\n\s*\n\s*\n+/g, '\n\n')      // Limit consecutive newlines to max 2
-    .trim()                                  // Trim leading/trailing whitespace
-    .replace(/([^\n])\n(#+ )/g, '$1\n\n$2') // Ensure spacing before headings
-    .replace(/(#+ [^\n]*)\n([^\n])/g, '$1\n\n$2') // Ensure spacing after headings
-    .replace(/([^\n])\n(- )/g, '$1\n\n$2')  // Ensure spacing before lists
-    .replace(/(- [^\n]*)\n([^\n])/g, '$1\n\n$2') // Ensure spacing after lists
-    .replace(/^\n+/, '')                     // Remove leading newlines
-    .replace(/\n+$/, '\n')                   // Remove trailing newlines
-    .replace(/\n\s*\n\s*\n+/g, '\n\n')      // Final cleanup of excessive newlines
-    .replace(/\n\s+(\d+)\s+\n/g, '\n$1\n')  // Clean up spacing around numbers
-    .replace(/\n\s+([A-Z][a-z]+)\s+\n/g, '\n$1\n') // Clean up spacing around text
-    .replace(/\n +/g, '\n');                 // Remove leading spaces from lines (but preserve newlines)
-  
-  cleaned = removeRepetitiveContent(cleaned);
-  return cleaned;
-}
+// Runs in isolated world when injected by popup
 
 class PageProcessor {
-  constructor() {
-    this.setupMessageListener();
-  }
-
-  setupMessageListener() {
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      if (request.action === 'convertToMarkdown') {
-        this.convertToMarkdown()
-            .then(result => sendResponse(result))
-            .catch(error => sendResponse({ success: false, error: error.message }));
-        return true; // Keep message channel open for async response
-      }
-    });
-  }
-
-  async convertToMarkdown() {
+  convertToMarkdown() {
     try {
       // Extract page content
       const title = this.extractTitle();
@@ -409,5 +269,21 @@ class PageProcessor {
   }
 }
 
-// Initialize the page processor
-new PageProcessor();
+function makeFilename(doc = document) {
+  const t = (doc.title || 'page').trim().toLowerCase()
+    .replace(/[^\w\-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const iso = new Date().toISOString().slice(0,10);
+  return `${t || 'page'}-${iso}.md`;
+}
+
+// SINGLE, STABLE EXPORT:
+// Popup will call this via a separate executeScript({ func })
+window.__mdc_convert = () => {
+  const proc = new PageProcessor();
+  const result = proc.convertToMarkdown();
+  return { 
+    markdown: result.markdown, 
+    filename: result.filename,
+    title: result.title
+  };
+};

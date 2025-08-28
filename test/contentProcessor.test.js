@@ -3,14 +3,18 @@
  * Following TDD principles - tests written before implementation
  */
 
-const { 
-  isElementVisible, 
-  hasRealContent, 
-  shouldProcessElement, 
-  removeRepetitiveContent, 
+// Load the utility functions into the global scope for testing
+require('../utils/contentProcessor.js');
+
+// The functions are now available globally in the test environment
+const {
+  isElementVisible,
+  hasRealContent,
+  shouldProcessElement,
+  removeRepetitiveContent,
   cleanupMarkdown,
-  createMockElement 
-} = require('../utils/contentProcessor.js');
+  createMockElement
+} = global;
 
 // Mock DOM environment for testing
 const jsdom = require('jsdom');
