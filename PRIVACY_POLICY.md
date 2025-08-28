@@ -22,9 +22,9 @@ Web Crawler - Markdown Converter is a Chrome browser extension that converts web
 The extension requires the following permissions to function:
 
 - **activeTab**: To access the current webpage for conversion
+- **scripting**: To inject conversion scripts into the current page
 - **storage**: To temporarily store conversion settings (local only)
 - **downloads**: To save markdown files to your device
-- **host_permissions**: To work on all websites
 
 ## Data Storage
 

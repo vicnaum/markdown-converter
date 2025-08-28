@@ -13,13 +13,24 @@ describe('Copy to Clipboard button', () => {
     // Mock chrome APIs
     global.chrome = {
       tabs: {
-        query: jest.fn().mockResolvedValue([{ id: 321 }]),
-        sendMessage: jest.fn().mockResolvedValue({
-          success: true,
-          markdown: '# Title\n\nThis is test content',
-          filename: 'title-2025-08-28.md',
-          title: 'Test Page'
-        })
+        query: jest.fn().mockResolvedValue([{ id: 321 }])
+      },
+      scripting: {
+        executeScript: jest.fn((injection) => {
+          // First call (files injection): return nothing meaningful
+          if (injection.files) return Promise.resolve([{}]);
+          // Second call (func call): return conversion result
+          if (injection.func) {
+            return Promise.resolve([{
+              result: { 
+                markdown: '# Title\n\nThis is test content', 
+                filename: 'title-2025-08-28.md', 
+                title: 'Test Page' 
+              }
+            }]);
+          }
+          return Promise.resolve([{}]);
+        }),
       },
       downloads: { download: jest.fn().mockResolvedValue(42) },
     };
