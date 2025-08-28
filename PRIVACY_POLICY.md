@@ -1,6 +1,6 @@
 # Privacy Policy for Web Crawler - Markdown Converter
 
-**Last updated:** [Current Date]
+**Last updated:** August 28, 2025
 
 ## Overview
 
@@ -22,9 +22,9 @@ Web Crawler - Markdown Converter is a Chrome browser extension that converts web
 The extension requires the following permissions to function:
 
 - **activeTab**: To access the current webpage for conversion
+- **scripting**: To inject conversion scripts into the current page
 - **storage**: To temporarily store conversion settings (local only)
 - **downloads**: To save markdown files to your device
-- **host_permissions**: To work on all websites
 
 ## Data Storage
 
@@ -48,7 +48,7 @@ We may update this privacy policy from time to time. We will notify users of any
 
 ## Contact Information
 
-If you have questions about this privacy policy, please contact us at [Your Email].
+If you have questions about this privacy policy, please contact us at lambdalf.dev@gmail.com.
 
 ## Compliance
 

@@ -34,30 +34,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Get current active tab
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      
-      // Send message to content script
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: 'convertToMarkdown'
+      if (!tab?.id) throw new Error('No active tab.');
+
+      // 1) Inject dependencies then the exporter; idempotent per navigation
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id, allFrames: false },
+        files: ['utils/contentProcessor.js', 'content/content.js']
       });
 
-             if (response.success) {
-         // Show success result
-         resultText.textContent = `Successfully converted "${response.title}" to Markdown`;
-         result.style.display = 'block';
-         status.innerHTML = '<p>Conversion complete!</p>';
-         
-         // Store the markdown content for download and copy
-         window.markdownContent = response.markdown;
-         window.filename = response.filename;
-         lastMarkdown = response.markdown;
-         lastFilename = response.filename;
-         
-         // Enable action buttons
-         downloadBtn.disabled = false;
-         copyBtn.disabled = false;
-       } else {
-         throw new Error(response.error || 'Conversion failed');
-       }
+      // 2) Call the exported function and capture the result
+      const [{ result: conversionResult }] = await chrome.scripting.executeScript({
+        target: { tabId: tab.id, allFrames: false },
+        func: () => {
+          if (typeof window.__mdc_convert !== 'function') {
+            return { error: '__mdc_convert not found' };
+          }
+          try { 
+            return window.__mdc_convert(); 
+          }
+          catch (e) { 
+            return { error: String(e?.message || e) }; 
+          }
+        }
+      });
+
+      if (!conversionResult || conversionResult.error) {
+        throw new Error(conversionResult?.error || 'Conversion failed');
+      } 
+
+      // Show success result
+      resultText.textContent = `Successfully converted "${conversionResult.title}" to Markdown`;
+      result.style.display = 'block';
+      status.innerHTML = '<p>Conversion complete!</p>';
+      
+      // Store the markdown content for download
+      window.markdownContent = conversionResult.markdown;
+      window.filename = conversionResult.filename;
 
     } catch (error) {
       console.error('Conversion error:', error);
@@ -73,13 +85,16 @@ document.addEventListener('DOMContentLoaded', function() {
   // Download button click handler
   downloadBtn.addEventListener('click', function() {
     if (window.markdownContent && window.filename) {
-      const blob = new Blob([window.markdownContent], { type: 'text/markdown' });
+      const blob = new Blob([window.markdownContent], { type: 'text/markdown;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       
       chrome.downloads.download({
         url: url,
         filename: window.filename,
-        saveAs: true
+        saveAs: false
+      }).then(() => {
+        // Clean up the blob URL after a delay
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
       });
     }
   });

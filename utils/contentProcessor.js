@@ -184,12 +184,21 @@ function createMockElement(tagName, attributes = {}, textContent = '', children 
   return element;
 }
 
-// Export all functions
-module.exports = {
-  isElementVisible,
-  hasRealContent,
-  shouldProcessElement,
-  removeRepetitiveContent,
-  cleanupMarkdown,
-  createMockElement
-};
+// Make functions available globally for both browser and test environments
+if (typeof window !== 'undefined') {
+  // Browser environment - make functions available globally
+  window.isElementVisible = isElementVisible;
+  window.hasRealContent = hasRealContent;
+  window.shouldProcessElement = shouldProcessElement;
+  window.removeRepetitiveContent = removeRepetitiveContent;
+  window.cleanupMarkdown = cleanupMarkdown;
+  window.createMockElement = createMockElement;
+} else if (typeof global !== 'undefined') {
+  // Node.js environment (for tests) - make functions available globally
+  global.isElementVisible = isElementVisible;
+  global.hasRealContent = hasRealContent;
+  global.shouldProcessElement = shouldProcessElement;
+  global.removeRepetitiveContent = removeRepetitiveContent;
+  global.cleanupMarkdown = cleanupMarkdown;
+  global.createMockElement = createMockElement;
+}
